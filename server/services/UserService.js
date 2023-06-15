@@ -5,8 +5,8 @@ const bcrypt = require("bcrypt");
 module.exports = {
   loginGet: async (req, res) => {
     try {
-      const result = await UserModel.find().lean();
-      res.status(200).json({
+      const result = await UserModel.find();
+      return res.status(200).json({
         status: 0,
         data: result,
         message: "All users details fetched successfully",
@@ -26,7 +26,7 @@ module.exports = {
         return res.status(404).json({ status: 0, message: "User not found" });
       }
 
-      res.status(200).json({
+      return res.status(200).json({
         status: 1,
         data: user,
         message: "User details found successfully",
@@ -51,7 +51,7 @@ module.exports = {
         image: null,
         password: hashedPassword,
       });
-      res.status(200).json({
+      return res.status(200).json({
         status: 1,
         data: result,
         message: "Admin register successfully",
@@ -66,14 +66,18 @@ module.exports = {
     const { email, password } = req.body;
 
     try {
-      const user = await UserModel.findOne({ email }).lean();
+      const user = await UserModel.findOne({ email });
       if (!user) {
-        res.status(401).json({ status: 0, message: "Invalid credentials" });
+        return res
+          .status(401)
+          .json({ status: 0, message: "Invalid credentials" });
       }
 
       const match = await bcrypt.compare(password, user.password);
       if (!match) {
-        res.status(401).json({ status: 0, message: "Invalid credentials" });
+        return res
+          .status(401)
+          .json({ status: 0, message: "Invalid credentials" });
       }
 
       const accessToken = jwt.sign(
@@ -84,7 +88,7 @@ module.exports = {
         }
       );
 
-      res.status(200).json({
+      return res.status(200).json({
         status: 1,
         token: accessToken,
         data: user,
