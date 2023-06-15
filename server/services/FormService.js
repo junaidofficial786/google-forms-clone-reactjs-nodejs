@@ -1,204 +1,271 @@
 const FormModel = require("../db/Form");
 const UserModel = require("../db/User");
 const ResponseModel = require("../db/Response");
-const jwt = require("jsonwebtoken");
-const jwtDecode = require("jwt-decode");
 
 module.exports = {
   formsGet: async (req, res) => {
     try {
-      var result = await FormModel.find().lean();
-      res.send(result);
+      const result = await FormModel.find().lean();
+      res.status(200).json({
+        status: 1,
+        data: result,
+        message: "All forms fetched successfully",
+      });
     } catch (e) {
-      res.send(e);
+      res
+        .status(500)
+        .json({ status: 0, error: e, message: "Internal server error" });
     }
   },
 
   createForm: async (req, res) => {
-    try {
-      var data = {
-        createdBy: req.body.createdBy,
-        name: req.body.name,
-        description: req.body.description,
-      };
-      console.log(data);
+    const { userId, name, description } = req.body;
 
-      var newForm = new FormModel(data);
-      await newForm.save().then((docs) => {
-        UserModel.updateOne(
-          { _id: data.createdBy },
-          { $push: { createdForms: docs._id } }
-        )
-          .then(() => {
-            console.log("Form id added to user deeatils");
-          })
-          .catch((error) => console.log("got some error"));
-        res.status(200).json(docs);
+    try {
+      const user = await UserModel.findOne({ _id: userId });
+      if (!user) {
+        res.status(404).json({ status: 0, message: "User not found" });
+      }
+
+      const newForm = await FormModel.create({
+        createdBy: userId,
+        name,
+        description,
       });
-    } catch (error) {
-      res.send(error);
+
+      const updatedUser = await UserModel.findByIdAndUpdate(
+        { _id: newForm.createdBy },
+        {
+          $push: { createdForms: newForm._id },
+          new: true,
+        }
+      );
+
+      res.status(200).json({
+        status: 1,
+        form: newForm,
+        user: updatedUser,
+        message: "Form created & User updated successfully",
+      });
+    } catch (e) {
+      res
+        .status(500)
+        .json({ status: 0, error: e, message: "Internal server error" });
     }
   },
 
   getFormById: async (req, res) => {
-    try {
-      var formId = req.params.formId;
+    const formId = req.params.formId;
 
-      await FormModel.findOne({ _id: formId }).then(async (form) => {
-        if (form == null) {
-          res.status(404).send("Form not found");
-        } else {
-          res.status(200).json(form);
-        }
+    try {
+      const form = await FormModel.findOne({ _id: formId });
+      if (!form) {
+        res.status(404).json({ status: 0, message: "Form not found" });
+      }
+
+      res.status(200).json({
+        status: 1,
+        data: form,
+        message: "Form details fetched successfully",
       });
-    } catch (error) {
-      res.send(error);
+    } catch (e) {
+      res
+        .status(500)
+        .json({ status: 0, error: e, message: "Internal server error" });
     }
   },
 
   deleteForm: async (req, res) => {
+    const { formId, userId } = req.params;
+
     try {
-      var formId = req.params.formId;
-      var userId = req.params.userId;
+      const user = await UserModel.findOne({ _id: userId });
+      if (!user) {
+        res.status(404).json({ status: 0, message: "User not found" });
+      }
 
-      console.log(formId);
-      console.log(userId);
+      const form = await FormModel.findOne({ _id: formId });
+      if (!form) {
+        res
+          .status(404)
+          .json({ status: 0, message: "Form not found or already deleted" });
+      }
 
-      await FormModel.findOne({ _id: formId }).then(async (form) => {
-        console.log(form);
-        if (form == null) {
-          res.status(404).send("Form not found or already deleted");
-        } else {
-          if (form.createdBy == userId) {
-            form.remove(function (err) {
-              if (err) {
-                return res.status(500).send(err);
-              }
-              console.log("Form deleted");
-              return res.status(202).send("Form Deleted");
-            });
-          } else {
-            res.status(401).send("You are not the owner of this Form");
-          }
-        }
-      });
-    } catch (error) {}
+      if (form.createdBy === userId) {
+        await FormModel.deleteOne({ _id: formId });
+        return res
+          .status(200)
+          .json({ status: 1, message: "Form deleted successfully" });
+      } else {
+        res
+          .status(401)
+          .json({ status: 0, message: "You are not the owner of this Form" });
+      }
+    } catch (e) {
+      res
+        .status(500)
+        .json({ status: 0, error: e, message: "Internal server error" });
+    }
   },
 
   editForm: async (req, res) => {
+    const { formId, userId, name, description, questions } = req.body;
+
     try {
-      var formId = req.body.formId;
-      var data = {
-        name: req.body.name,
-        description: req.body.description,
-        questions: req.body.questions,
+      const user = await UserModel.findOne({ _id: userId });
+      if (!user) {
+        res.status(404).json({ status: 0, message: "User not found" });
+      }
+
+      const form = await FormModel.findOne({ _id: formId, createdBy: userId });
+      if (!form) {
+        res.status(404).json({
+          status: 0,
+          message: "Form not found or user are not the owner of this form ",
+        });
+      }
+
+      let updatedData = {
+        name,
+        description,
+        questions,
       };
 
-      console.log("Hi, I am from backend, this is form data that i recivied");
-
-      console.log(data);
-
-      FormModel.findByIdAndUpdate(
-        formId,
-        data,
-        { new: true },
-        (err, result) => {
-          if (err) {
-            res.status(500).send(err);
-          } else {
-            res.status(200).json(result);
-          }
-        }
+      const updateForm = await FormModel.findByIdAndUpdate(
+        { _id: formId },
+        updatedData,
+        { new: true }
       );
-    } catch (error) {
-      res.send(error);
+
+      res.status(200).json({
+        status: 1,
+        data: updateForm,
+        message: "Room updated successfully",
+      });
+    } catch (e) {
+      res
+        .status(500)
+        .json({ status: 0, error: e, message: "Internal server error" });
     }
   },
 
   getAllFormsOfUser: async (req, res) => {
+    const userId = req.params.userId;
+
     try {
-      var userId = req.params.userId;
-      console.log(userId);
-      await UserModel.findOne({ _id: userId }).then(async (user) => {
-        if (user == null) {
-          res.status(404).send("User not found");
-        } else {
-          await FormModel.find()
-            .where("_id")
-            .in(user.createdForms)
-            .exec((err, records) => {
-              console.log(records);
+      const user = await UserModel.findOne({ _id: userId });
+      if (!user) {
+        res.status(404).json({ status: 0, message: "User not found" });
+      }
 
-              res.status(200).json(records);
-            });
-        }
-
-        //   res.send(docs.createdForms)
+      const forms = await FormModel.find({ createdBy: userId });
+      if (!forms) {
+        res.status(404).json({ status: 0, message: "Form not found" });
+      }
+      res.status(200).json({
+        status: 1,
+        data: forms,
+        message: "Rooms fetched successfully",
       });
-    } catch (error) {
-      res.send(error);
+    } catch (e) {
+      res
+        .status(500)
+        .json({ status: 0, error: e, message: "Internal server error" });
     }
   },
 
   submitResponse: async (req, res) => {
+    const { formId, email, response } = req.body;
+
     try {
-      var data = {
-        formId: req.body.formId,
-        userId: req.body.userId,
-        response: req.body.response,
+      const form = await FormModel.findOne({ _id: formId });
+      if (!form) {
+        res.status(404).json({ status: 0, message: "Form not found" });
+      }
+
+      let data = {
+        formId,
+        submittedBy: email,
+        response,
       };
-      console.log(data.formId);
-      console.log(data.userId);
-
       if (data.response.length > 0) {
-        var newResponse = new ResponseModel(data);
-        // console.log(newResponse);
-
-        await newResponse.save().then((docs) => {
-          res.status(200).json(docs);
+        const response = await ResponseModel.create(data);
+        res.status(200).json({
+          status: 1,
+          data: response,
+          message: "Response submitted successfully",
         });
       } else {
-        res.status(400).send("FIll atleast one field, MF!");
+        res.status(400).json({ message: "Please fill at least one field" });
       }
-    } catch (error) {
-      res.send(error);
+    } catch (e) {
+      res
+        .status(500)
+        .json({ status: 0, error: e, message: "Internal server error" });
     }
   },
 
   allResponses: async (req, res) => {
     try {
-      var result = await ResponseModel.find().lean();
-      res.json(result);
+      const responses = await ResponseModel.find().lean();
+      if (!responses) {
+        res.status(404).json({ status: 0, message: "Response not found" });
+      }
+      res.status(200).json({
+        status: 1,
+        data: responses,
+        message: "Responses fetched successfully",
+      });
     } catch (e) {
-      res.send(e);
+      res
+        .status(500)
+        .json({ status: 0, error: e, message: "Internal server error" });
     }
   },
 
   getResponse: async (req, res) => {
-    try {
-      var formId = req.params.formId;
-      //   console.log(formId);
+    const formId = req.params.formId;
 
-      await ResponseModel.find({ formId: formId }).then(async (responses) => {
-        res.status(200).json(responses);
+    try {
+      const form = await FormModel.findOne({ _id: formId });
+      if (!form) {
+        res.status(404).json({ status: 0, message: "Form not found" });
+      }
+      const responsesById = await ResponseModel.find({ formId });
+      if (!responsesById) {
+        res.status(404).json({ status: 0, message: "Response not found" });
+      }
+
+      res.status(200).json({
+        status: 1,
+        data: responsesById,
+        message: "Responses by room id fetched successfully",
       });
-    } catch (error) {
-      res.send(error);
+    } catch (e) {
+      res
+        .status(500)
+        .json({ status: 0, error: e, message: "Internal server error" });
+    }
+  },
+
+  getResponseByEmail: async (req, res) => {
+    const { email } = req.body;
+
+    try {
+      const responsesByEmail = await ResponseModel.find({ submittedBy: email });
+      if (!responsesByEmail) {
+        res.status(404).json({ status: 0, message: "Response not found" });
+      }
+
+      res.status(200).json({
+        status: 1,
+        data: responsesByEmail,
+        message: "Responses by email fetched successfully",
+      });
+    } catch (e) {
+      res
+        .status(500)
+        .json({ status: 0, error: e, message: "Internal server error" });
     }
   },
 };
-
-// FormId: {
-//     type: mongoose.Schema.Types.ObjectId,
-//     ref: 'Form'
-//   },
-
-//   userId: {
-//     type: mongoose.Schema.Types.ObjectId,
-//     ref: 'User'
-//   },
-
-//   response : [{
-//       questionId: String,
-//       optionId: String,
-//   }],
