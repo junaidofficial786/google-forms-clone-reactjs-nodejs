@@ -5,8 +5,8 @@ const ResponseModel = require("../db/Response");
 module.exports = {
   formsGet: async (req, res) => {
     try {
-      const result = await FormModel.find().lean();
-      res.status(200).json({
+      const result = await FormModel.find();
+      return res.status(200).json({
         status: 1,
         data: result,
         message: "All forms fetched successfully",
@@ -24,7 +24,7 @@ module.exports = {
     try {
       const user = await UserModel.findOne({ _id: userId });
       if (!user) {
-        res.status(404).json({ status: 0, message: "User not found" });
+        return res.status(404).json({ status: 0, message: "User not found" });
       }
 
       const newForm = await FormModel.create({
@@ -41,7 +41,7 @@ module.exports = {
         }
       );
 
-      res.status(200).json({
+      return res.status(200).json({
         status: 1,
         form: newForm,
         user: updatedUser,
@@ -60,10 +60,10 @@ module.exports = {
     try {
       const form = await FormModel.findOne({ _id: formId });
       if (!form) {
-        res.status(404).json({ status: 0, message: "Form not found" });
+        return res.status(404).json({ status: 0, message: "Form not found" });
       }
 
-      res.status(200).json({
+      return res.status(200).json({
         status: 1,
         data: form,
         message: "Form details fetched successfully",
@@ -81,7 +81,7 @@ module.exports = {
     try {
       const user = await UserModel.findOne({ _id: userId });
       if (!user) {
-        res.status(404).json({ status: 0, message: "User not found" });
+        return res.status(404).json({ status: 0, message: "User not found" });
       }
 
       const form = await FormModel.findOne({ _id: formId });
@@ -114,12 +114,12 @@ module.exports = {
     try {
       const user = await UserModel.findOne({ _id: userId });
       if (!user) {
-        res.status(404).json({ status: 0, message: "User not found" });
+        return res.status(404).json({ status: 0, message: "User not found" });
       }
 
       const form = await FormModel.findOne({ _id: formId, createdBy: userId });
       if (!form) {
-        res.status(404).json({
+        return res.status(404).json({
           status: 0,
           message: "Form not found or user are not the owner of this form ",
         });
@@ -137,7 +137,7 @@ module.exports = {
         { new: true }
       );
 
-      res.status(200).json({
+      return res.status(200).json({
         status: 1,
         data: updateForm,
         message: "Room updated successfully",
@@ -155,14 +155,14 @@ module.exports = {
     try {
       const user = await UserModel.findOne({ _id: userId });
       if (!user) {
-        res.status(404).json({ status: 0, message: "User not found" });
+        return res.status(404).json({ status: 0, message: "User not found" });
       }
 
       const forms = await FormModel.find({ createdBy: userId });
       if (!forms) {
-        res.status(404).json({ status: 0, message: "Form not found" });
+        return res.status(404).json({ status: 0, message: "Form not found" });
       }
-      res.status(200).json({
+      return res.status(200).json({
         status: 1,
         data: forms,
         message: "Rooms fetched successfully",
@@ -180,7 +180,7 @@ module.exports = {
     try {
       const form = await FormModel.findOne({ _id: formId });
       if (!form) {
-        res.status(404).json({ status: 0, message: "Form not found" });
+        return res.status(404).json({ status: 0, message: "Form not found" });
       }
 
       let data = {
@@ -190,13 +190,15 @@ module.exports = {
       };
       if (data.response.length > 0) {
         const response = await ResponseModel.create(data);
-        res.status(200).json({
+        return res.status(200).json({
           status: 1,
           data: response,
           message: "Response submitted successfully",
         });
       } else {
-        res.status(400).json({ message: "Please fill at least one field" });
+        return res
+          .status(400)
+          .json({ message: "Please fill at least one field" });
       }
     } catch (e) {
       res
@@ -207,11 +209,13 @@ module.exports = {
 
   allResponses: async (req, res) => {
     try {
-      const responses = await ResponseModel.find().lean();
+      const responses = await ResponseModel.find();
       if (!responses) {
-        res.status(404).json({ status: 0, message: "Response not found" });
+        return res
+          .status(404)
+          .json({ status: 0, message: "Response not found" });
       }
-      res.status(200).json({
+      return res.status(200).json({
         status: 1,
         data: responses,
         message: "Responses fetched successfully",
@@ -229,14 +233,16 @@ module.exports = {
     try {
       const form = await FormModel.findOne({ _id: formId });
       if (!form) {
-        res.status(404).json({ status: 0, message: "Form not found" });
+        return res.status(404).json({ status: 0, message: "Form not found" });
       }
       const responsesById = await ResponseModel.find({ formId });
       if (!responsesById) {
-        res.status(404).json({ status: 0, message: "Response not found" });
+        return res
+          .status(404)
+          .json({ status: 0, message: "Response not found" });
       }
 
-      res.status(200).json({
+      return res.status(200).json({
         status: 1,
         data: responsesById,
         message: "Responses by room id fetched successfully",
@@ -254,10 +260,12 @@ module.exports = {
     try {
       const responsesByEmail = await ResponseModel.find({ submittedBy: email });
       if (!responsesByEmail) {
-        res.status(404).json({ status: 0, message: "Response not found" });
+        return res
+          .status(404)
+          .json({ status: 0, message: "Response not found" });
       }
 
-      res.status(200).json({
+      return res.status(200).json({
         status: 1,
         data: responsesByEmail,
         message: "Responses by email fetched successfully",
