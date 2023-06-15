@@ -7,15 +7,20 @@ var ResponseSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Form",
     },
-
-    userId: {
+    submittedBy: {
       type: String,
+      required: true,
     },
-
     response: [
       {
-        questionId: String,
-        optionId: String,
+        questionId: {
+          type: String,
+          default: null,
+        },
+        optionId: {
+          type: String,
+          default: null,
+        },
       },
     ],
   },

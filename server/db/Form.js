@@ -7,22 +7,21 @@ var FormSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
-
-    name: String,
-
+    name: {
+      type: String,
+    },
     description: {
       type: String,
       default: "",
     },
-
     questions: [
       {
         open: { type: Boolean, default: false },
-        questionText: String,
+        questionText: { type: String, default: "" },
         questionImage: { type: String, default: "" },
         options: [
           {
-            optionText: String,
+            optionText: { type: String, default: "" },
             optionImage: { type: String, default: "" },
           },
         ],

@@ -1,15 +1,15 @@
-var router = require('express').Router()
+var router = require("express").Router();
 
-const UserRouter = require('./UserRouter')
-const FormRouter = require('./FormRouter')
+const UserRouter = require("./UserRouter");
+const FormRouter = require("./FormRouter");
 
+// user and form routes
+router.use("/user", UserRouter);
+router.use("/form", FormRouter);
 
-router.use('/user', UserRouter)
-router.use('/form', FormRouter)
-
-router.get('/', (req, res)=>{
-    res.send("Router.js working fine")
-})
-
+// for all routes checking
+router.get("/", (req, res) => {
+  res.send("Router.js working fine");
+});
 
 module.exports = router;
