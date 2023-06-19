@@ -1,74 +1,71 @@
-
-import axios from 'axios';
-import jwtDecode from 'jwt-decode';
-import jwt from 'jsonwebtoken';
+import axios from "axios";
+import jwtDecode from "jwt-decode";
+import jwt from "jsonwebtoken";
+import { toast } from "react-toastify";
 const API_URL = "http://localhost:5000/api/user/";
 //const API_URL = "http://192.168.225.23:5000/api/user/"
 
+export default {
+  isAuthenticated() {
+    const token = localStorage.getItem("userTicket");
+    if (token) {
+      return true;
+    } else {
+      return false;
+    }
+  },
 
+  getGuestUser() {
+    return { name: "Guest 123", userId: "guest123", email: "coolboy69@gg.com" };
+  },
 
-export default   {
+  authenticate(cb) {
+    this.isAuthenticated = true;
+    setTimeout(cb, 100); // fake async
+  },
 
-    isAuthenticated() {
-      const token = localStorage.getItem('userTicket')
-        if (token) {
-          return true
-        } else {
-          return false
-        }
-    },
-
-    getGuestUser(){
-        return {name: "Guest 123", userId: "guest123", email: "coolboy69@gg.com"}
-    },
-
-    authenticate(cb) {
-      this.isAuthenticated = true;
-      setTimeout(cb, 100); // fake async
-    },
-
-    signout(cb) {
-      this.isAuthenticated = false;
-      setTimeout(cb, 100);
-    },
-
-
-    loginWithGoogle(res) {
-      var data = {
-        name: res.profileObj.name,
-        email : res.profileObj.email,
-        image: res.profileObj.imageUrl
-      }
-
-      return axios
-        .post(API_URL + "login", data)
-        .then(response => {
-          console.log(response.data); 
-          if (response.data.accessToken) {
-            localStorage.setItem("userTicket", JSON.stringify(response.data.accessToken));          
-          }
-          return response.data;
+  signout(cb) {
+    this.isAuthenticated = false;
+    setTimeout(cb, 100);
+  },
+  register(user) {
+    return new Promise(async (resolve, reject) => {
+      await axios
+        .post(API_URL + "signup", user)
+        .then((response) => {
+          resolve(response.data);
+        })
+        .catch((error) => {
+          toast.error(error?.response?.data?.message || "Something went wrong");
+          reject(error);
         });
-    },
+    });
+  },
+  loginUser(user) {
+    return new Promise(async (resolve, reject) => {
+      await axios
+        .post(API_URL + "login", user)
+        .then((response) => {
+          if (response.data) {
+            localStorage.setItem(
+              "userTicket",
+              JSON.stringify(response.data.data._id)
+            );
+          }
+          resolve(response.data);
+        })
+        .catch((error) => {
+          toast.error(error?.response?.data?.message || "Something went wrong");
+          reject(error);
+        });
+    });
+  },
 
-    loginAsGuest(){
-      var userData = {
-        name: "Cool Guest", 
-        id: "y2jsdqakq9rqyvtd4gf6g", 
-        email: "coolboy69@gg.com"
-      }
+  logout() {
+    localStorage.removeItem("userTicket");
+  },
 
-      const accessToken = jwt.sign(userData, "thisisaguesttokenwithsomeshittystring8", {expiresIn: '24h'});
-      localStorage.setItem("userTicket", JSON.stringify(accessToken));   
-      return accessToken;   
-
-    },
-
-    logout() {
-      localStorage.removeItem("userTicket");
-    },
-
-    getCurrentUser() {
-       return jwtDecode(localStorage.getItem('userTicket'));
-     },
-  };
+  getCurrentUser() {
+    return JSON.parse(localStorage.getItem("userTicket"));
+  },
+};

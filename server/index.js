@@ -21,6 +21,9 @@ mongoose
   })
   .then(() => {
     console.log("Database connected successfully");
+  })
+  .catch((err) => {
+    console.log(err);
   });
 
 //upload
@@ -39,7 +42,13 @@ const upload = multer({ storage });
 
 //middleware
 app.use(express.static("public"));
-app.use(cors());
+app.use(
+  cors({
+    origin: "*",
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    credentials: true,
+  })
+);
 app.use(bodyParser.json({ limit: "50mb", extended: true }));
 app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
 app.use(express.json());

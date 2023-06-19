@@ -1,16 +1,15 @@
 import axios from "axios";
+import { toast } from "react-toastify";
 const API_URL = "http://localhost:5000/api/form/";
 
 export default {
   getForms(userId) {
-    return axios.get(API_URL + "getuserforms/" + userId).then((response) => {
+    return axios.get(API_URL + "getUserForms/" + userId).then((response) => {
       return response.data;
     });
   },
 
   createForm(data) {
-    console.log(data);
-    delete data.createdBy;
     return axios.post(API_URL + "create", data).then((response) => {
       console.log(response.data);
       return response.data;
@@ -20,13 +19,14 @@ export default {
   getForm(formId) {
     return axios.get(API_URL + "form/" + formId).then((response) => {
       //  console.log(response.data);
-      return response.data;
+      return response.data.data;
     });
   },
 
   autoSave(data) {
-    console.log(data);
-    return axios.put(API_URL + "/editform/", data).then((response) => {
+    // console.log(data);
+    data.userId = JSON.parse(localStorage.getItem("userTicket"));
+    return axios.put(API_URL + "/editForm/", data).then((response) => {
       console.log(response.data);
       return response.data;
     });
@@ -42,9 +42,25 @@ export default {
 
   getResponse(formId) {
     //  console.log(formId);
-    return axios.get(API_URL + "getresponse/" + formId).then((response) => {
+    return axios.get(API_URL + "getResponse/" + formId).then((response) => {
       // console.log(response.data);
       return response.data;
     });
+  },
+
+  deleteForm(formId, userId) {
+    return axios
+      .delete(API_URL + "deleteForm/" + formId + "/" + userId)
+      .then((response) => {
+        toast.success("Form deleted successfully");
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+        return response.data;
+      })
+      .catch((err) => {
+        toast.error("You are not authorized to delete this form");
+        return err;
+      });
   },
 };

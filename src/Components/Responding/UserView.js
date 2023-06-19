@@ -113,8 +113,13 @@ function UserView(props) {
 
     formService.getForm(formId).then(
       (data) => {
-        console.log(data);
-
+        console.log(data, "Data received");
+        if (data.length === 0) {
+          setFormData([]);
+          setQuestions([]);
+          setOptionValue([]);
+          return;
+        }
         setFormData(data);
         setQuestions(data.questions);
         setOptionValue(
@@ -197,7 +202,7 @@ function UserView(props) {
               <MenuIcon />
             </IconButton>
             <Typography variant="h6" style={{}}>
-              Velocity Forms
+              Google Form Clone
             </Typography>
           </Toolbar>
         </AppBar>

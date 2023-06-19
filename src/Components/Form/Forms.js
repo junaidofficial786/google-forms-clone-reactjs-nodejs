@@ -41,9 +41,9 @@ function Forms(props) {
       // console.log(props.userId);
       formService.getForms(props.userId).then(
         (forms2) => {
-          console.log(forms2);
+          console.log(forms2.data);
 
-          setForms([]);
+          setForms(forms2?.data || []);
           setLoadingForms(false);
         },
 
@@ -67,9 +67,23 @@ function Forms(props) {
         {loadingForms ? <CircularProgress /> : ""}
         <Container className={classes.cardGrid} maxWidth="lg">
           <Grid container spacing={6}>
-            {forms.map((form, i) => (
-              <OneForm formData={form} key={i} />
-            ))}
+            {forms.length > 0 ? (
+              forms.map((form, i) => (
+                <OneForm
+                  formData={form}
+                  key={i}
+                  userId={JSON.parse(localStorage.getItem("userTicket"))}
+                />
+              ))
+            ) : (
+              <h1
+                style={{
+                  textAlign: "center",
+                }}
+              >
+                No forms yet
+              </h1>
+            )}
           </Grid>
         </Container>
       </div>
