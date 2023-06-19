@@ -27,6 +27,7 @@ import ImageUplaodModel from "./ImageUplaodModel";
 import formService from "../../services/formService";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import SaveIcon from "@material-ui/icons/Save";
+import { toast } from "react-toastify";
 
 function QuestionsTab(props) {
   const [questions, setQuestions] = React.useState([]);
@@ -69,7 +70,8 @@ function QuestionsTab(props) {
     formService.autoSave(data).then(
       (result) => {
         console.log(result);
-        setQuestions(result.questions);
+        setQuestions(result.data.questions);
+        toast.success("Questions saved successfully");
       },
       (error) => {
         const resMessage =

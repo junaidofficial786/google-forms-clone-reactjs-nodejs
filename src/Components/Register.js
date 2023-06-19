@@ -28,35 +28,34 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const CLIENT_ID = process.env.REACT_APP_CLIENT_ID;
-
-function Login(props) {
+function Register(props) {
   const classes = useStyles();
   let history = useHistory();
-  const [isLogined, setIsLogined] = React.useState(false);
   const { from } = props.location.state || { from: { pathname: "/" } };
   const [user, setUser] = React.useState({
+    name: "",
     email: "",
     password: "",
+    confirmPassword: "",
   });
+  const [isLogined, setIsLogined] = React.useState(false);
+
   React.useEffect(() => {
     setIsLogined(authService.isAuthenticated());
   }, []);
 
-  if (isLogined) {
-    history.push("/");
-  }
-  const loginUser = (e) => {
+  const [isPasswordError, setIsPasswordError] = React.useState(false);
+  const register = (e) => {
     e.preventDefault();
+    if (user.password !== user.confirmPassword) {
+      setIsPasswordError(true);
+      return;
+    }
     authService
-      .loginUser(user)
+      .register(user)
       .then(
         () => {
-          if (from.pathname === "/login") {
-            history.push("/");
-          } else {
-            history.push(from.pathname);
-          }
+          history.push("/login");
         },
         (error) => {
           console.log(error);
@@ -66,10 +65,14 @@ function Login(props) {
         setUser({
           email: "",
           password: "",
+          confirmPassword: "",
+          name: "",
         });
       });
   };
-
+  if (isLogined) {
+    history.push("/");
+  }
   return (
     <div>
       <CssBaseline />
@@ -97,7 +100,7 @@ function Login(props) {
       <br></br>
       <main>
         <Typography component="h1" variant="h5">
-          Login
+          Register
         </Typography>
         <br></br>
         <br></br>
@@ -112,13 +115,7 @@ function Login(props) {
           <div>
             <Grid container spacing={2} justify="center">
               <Grid item>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={() => {
-                    history.push("/register");
-                  }}
-                >
+                <Button variant="contained" color="primary" disabled>
                   Register
                 </Button>
               </Grid>
@@ -126,7 +123,6 @@ function Login(props) {
                 <Button
                   variant="contained"
                   color="primary"
-                  disabled
                   onClick={() => {
                     history.push("/login");
                   }}
@@ -144,12 +140,12 @@ function Login(props) {
             <Paper
               elevation={3}
               style={{
-                "max-width": "500px",
+                maxWidth: "500px",
                 margin: "auto",
               }}
             >
               {/* Login View */}
-              <form onSubmit={loginUser}>
+              <form onSubmit={register}>
                 <div
                   style={{
                     display: "flex",
@@ -159,10 +155,26 @@ function Login(props) {
                 >
                   <div style={{ padding: "20px" }}>
                     <TextField
-                      id="outlined-basic"
+                      id="outlined-name"
+                      label="Name"
+                      variant="outlined"
+                      fullWidth
+                      name="name"
+                      required
+                      value={user.name}
+                      onChange={(e) => {
+                        setUser({ ...user, name: e.target.value });
+                      }}
+                    />
+                  </div>
+                  <div style={{ padding: "20px" }}>
+                    <TextField
+                      id="outlined-email"
                       label="Email"
                       variant="outlined"
                       fullWidth
+                      type="email"
+                      name="email"
                       required
                       value={user.email}
                       onChange={(e) => {
@@ -172,18 +184,45 @@ function Login(props) {
                   </div>
                   <div style={{ padding: "20px" }}>
                     <TextField
-                      id="outlined-basic"
+                      id="outlined-password"
                       label="Password"
                       variant="outlined"
                       fullWidth
+                      name="password"
                       required
                       value={user.password}
+                      type="password"
                       onChange={(e) => {
                         setUser({ ...user, password: e.target.value });
                       }}
-                      type="password"
                     />
                   </div>
+                  <div style={{ padding: "20px" }}>
+                    <TextField
+                      id="outlined-confirmPassword"
+                      label="Confirm Password"
+                      variant="outlined"
+                      fullWidth
+                      required
+                      name="confirmPassword"
+                      type="password"
+                      value={user.confirmPassword}
+                      onChange={(e) => {
+                        setUser({ ...user, confirmPassword: e.target.value });
+                      }}
+                      error={isPasswordError}
+                    />
+                    {
+                      <div style={{ textAlign: "left" }}>
+                        {isPasswordError ? (
+                          <Typography variant="caption" color="error">
+                            Passwords do not match
+                          </Typography>
+                        ) : null}
+                      </div>
+                    }
+                  </div>
+
                   <div style={{ padding: "20px" }}>
                     <Button
                       variant="contained"
@@ -191,7 +230,7 @@ function Login(props) {
                       fullWidth
                       type="submit"
                     >
-                      Login
+                      Register
                     </Button>
                   </div>
                 </div>
@@ -204,4 +243,4 @@ function Login(props) {
   );
 }
 
-export default Login;
+export default Register;

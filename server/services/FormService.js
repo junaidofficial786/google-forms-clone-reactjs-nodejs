@@ -76,6 +76,7 @@ module.exports = {
   },
 
   deleteForm: async (req, res) => {
+    // give the url
     const { formId, userId } = req.params;
 
     try {
@@ -91,7 +92,11 @@ module.exports = {
           .json({ status: 0, message: "Form not found or already deleted" });
       }
 
-      if (form.createdBy === userId) {
+      console.log({
+        form,
+        userId,
+      });
+      if (form.createdBy == userId) {
         await FormModel.deleteOne({ _id: formId });
         return res
           .status(200)

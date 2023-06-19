@@ -27,6 +27,7 @@ import DialogTitle from "@material-ui/core/DialogTitle";
 import Button from "@material-ui/core/Button";
 import TextField from "@material-ui/core/TextField";
 import formService from "../services/formService";
+import { toast } from "react-toastify";
 
 const useStyles = makeStyles((theme) => ({
   grow: {
@@ -145,8 +146,12 @@ function Dashboard() {
     var data = {
       name: formTitle,
       description: formDescription,
-      createdBy: user.id,
+      userId: JSON.parse(localStorage.getItem("userTicket")),
     };
+    if (data.name === "" || data.description === "") {
+      toast.error("Please enter form name");
+      return;
+    }
     console.log(data);
     if (data.name !== "") {
       formService.createForm(data).then(
@@ -154,7 +159,7 @@ function Dashboard() {
           console.log("result", result);
           // return;
           // localStorage.setItem("formName")
-          history.push("/form/" + result._id);
+          history.push("/form/" + result.form._id);
         },
 
         (error) => {
@@ -235,12 +240,13 @@ function Dashboard() {
             className={classes.menuButton}
             color="inherit"
             aria-label="open drawer"
+            onClick={() => history.goBack()}
           >
             <HomeIcon />
           </IconButton>
 
           <Typography className={classes.title} variant="h6" noWrap>
-            Velocity Forms
+            Google Form Clone
           </Typography>
 
           <div className={classes.search}>
@@ -318,7 +324,6 @@ function Dashboard() {
               />
               <br></br>
               <TextField
-                autoFocus
                 margin="dense"
                 id="description"
                 label="Form description"
@@ -342,7 +347,7 @@ function Dashboard() {
           </Dialog>
         </div>
         <div style={{ marginTop: "10px" }}>
-          <Forms userId={user.id} />
+          <Forms userId={user} />
         </div>
       </div>
     </div>

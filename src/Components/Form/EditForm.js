@@ -37,6 +37,7 @@ import QuestionsTab from "./QuestionsTab";
 import ResponseTab from "../Response/ResponseTab";
 import formService from "../../services/formService";
 import auth from "../../services/authService";
+import { useHistory } from "react-router-dom";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -67,6 +68,8 @@ const useStyles = makeStyles((theme) => ({
 
 function EditForm(props) {
   const classes = useStyles();
+  let history = useHistory();
+
   const [value, setValue] = React.useState(0);
   const [open, setOpen] = React.useState(false);
   const [user, setUser] = React.useState({});
@@ -121,7 +124,7 @@ function EditForm(props) {
       setFormID(formId);
       formService.getForm(formId).then(
         (data) => {
-          // console.log(data);
+          console.log(data.data);
           setFormDetails(data);
         },
         (error) => {
@@ -139,7 +142,7 @@ function EditForm(props) {
 
   return (
     <div>
-      {formDeatils.createdBy === user._id ? (
+      {formDeatils.createdBy === user ? (
         <div>
           <div className={classes.root}>
             <AppBar
@@ -153,6 +156,9 @@ function EditForm(props) {
                   className={classes.menuButton}
                   aria-label="Rohit Saini's form"
                   style={{ color: "#140078" }}
+                  onClick={() => {
+                    history.goBack();
+                  }}
                 >
                   <ViewListIcon />
                 </IconButton>
@@ -202,7 +208,16 @@ function EditForm(props) {
                 <IconButton aria-label="display more actions" edge="end">
                   <MoreIcon />
                 </IconButton>
-                <IconButton aria-label="display more actions" edge="end">
+                <IconButton
+                  aria-label="display more actions"
+                  edge="end"
+                  onClick={() => {
+                    if (window.confirm("Really want to logout?")) {
+                      auth.logout();
+                      history.push("/login");
+                    }
+                  }}
+                >
                   <AccountCircleIcon />
                 </IconButton>
               </Toolbar>
